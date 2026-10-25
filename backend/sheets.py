@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 import httpx
 import pandas as pd
+from datetime import datetime
 
 load_dotenv()
 
@@ -16,6 +17,14 @@ params = {
 data_range = "Data!A1:N400"
 url = f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values/{data_range}"
 
+cache = {"df": None, "loaded_at": None}
+def get_data(refresh=False):
+    if refresh==True or cache["df"] is None:
+        df = load_data()
+        cache["df"] = df
+        cache["loaded_at"] = datetime.now().isoformat(timespec="seconds")
+    return cache["df"]
+
 def load_data():
     response = httpx.get(url, params=params)
     response.raise_for_status()
@@ -27,8 +36,4 @@ def load_data():
     return df
 
 if __name__ == "__main__":
-    df = load_data()
-    print(df.head(3))
-    print(df.tail(3))
-    print(df.dtypes)
-    print(len(df))
+    print(get_data())

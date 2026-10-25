@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weyland-Yutani mine output</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M3 7l5.5 18L16 11l7.5 14L29 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <h1>Mine output monitor</h1>
+          <p class="muted">Weyland-Yutani production data, read from the shared sheet</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span id="loaded-at" class="muted" role="status"></span>
+        <button id="refresh" class="btn" type="button">Refresh data</button>
+        <button id="theme" class="btn" type="button">Dark mode</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" id="main">
+    <div id="error" class="error" role="alert" hidden></div>
+
+    <section class="card toolbar" aria-label="Analysis settings">
+      <div class="field">
+        <label for="test">Anomaly test</label>
+        <select id="test">
+          <option value="iqr">IQR rule</option>
+          <option value="zscore">Z-score</option>
+          <option value="moving_average">Moving average deviation</option>
+          <option value="grubbs">Grubbs test</option>
+        </select>
+      </div>
+      <div id="params" class="params"></div>
+      <div class="field">
+        <span class="label" id="chart-type-label">Chart</span>
+        <div class="segmented" id="chart-type" role="group" aria-labelledby="chart-type-label">
+          <button type="button" data-value="line" aria-pressed="true">Line</button>
+          <button type="button" data-value="bar" aria-pressed="false">Bar</button>
+          <button type="button" data-value="stacked" aria-pressed="false">Stacked</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label" id="trend-label">Trendline, polynomial degree</span>
+        <div class="segmented" id="trend" role="group" aria-labelledby="trend-label">
+          <button type="button" data-value="0" aria-pressed="true">Off</button>
+          <button type="button" data-value="1" aria-pressed="false">1</button>
+          <button type="button" data-value="2" aria-pressed="false">2</button>
+          <button type="button" data-value="3" aria-pressed="false">3</button>
+          <button type="button" data-value="4" aria-pressed="false">4</button>
+        </div>
+      </div>
+    </section>
+    <p id="test-help" class="help"></p>
+
+    <section class="card hero busy-dim" aria-labelledby="hero-title">
+      <div class="hero-main">
+        <div class="hero-figure" id="hero-count">0</div>
+        <div class="hero-text">
+          <p class="hero-title" id="hero-title">anomalies flagged</p>
+          <p class="hero-desc" id="hero-desc"></p>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button id="pdf" class="btn btn-primary" type="button">Download PDF report</button>
+        <span id="pdf-status" class="muted" role="status"></span>
+      </div>
+      <div class="hero-strip">
+        <p class="strip-caption">Anomalies per day, all series together</p>
+        <div id="strip" class="strip" role="img" aria-label="Anomalies per day"></div>
+        <div class="strip-axis"><span id="strip-start"></span><span id="strip-end"></span></div>
+      </div>
+    </section>
+
+    <section class="card busy-dim" aria-labelledby="chart-title">
+      <div class="card-head">
+        <h2 id="chart-title">Daily output</h2>
+        <div class="segmented" id="view" role="group" aria-label="Show as">
+          <button type="button" data-value="chart" aria-pressed="true">Chart</button>
+          <button type="button" data-value="table" aria-pressed="false">Table</button>
+        </div>
+      </div>
+      <div id="legend" class="legend"></div>
+      <div id="chart-wrap" class="chart-wrap">
+        <canvas id="chart" role="img" aria-label="Daily output chart"></canvas>
+      </div>
+      <div id="table-wrap" class="table-wrap" tabindex="0" role="region" aria-label="Daily output table" hidden></div>
+      <p id="chart-note" class="note"></p>
+    </section>
+
+    <div class="split">
+      <section class="card busy-dim" aria-labelledby="stats-title">
+        <div class="card-head"><h2 id="stats-title">Summary statistics</h2></div>
+        <div id="stats" class="table-wrap" tabindex="0" role="region" aria-label="Summary statistics"></div>
+      </section>
+      <section class="card busy-dim" aria-labelledby="anomalies-title">
+        <div class="card-head"><h2 id="anomalies-title">Flagged days</h2></div>
+        <div id="anomalies" class="table-wrap" tabindex="0" role="region" aria-label="Flagged days"></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="tip" class="tip" role="tooltip" hidden></div>
+</body>
+</html>

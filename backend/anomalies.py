@@ -64,6 +64,8 @@ def find_moving_average(df, window=7, percent=25):
         })
     return info
 
+
+
 if __name__ == "__main__":
     df = load_data()
     info = find_iqr(df)
