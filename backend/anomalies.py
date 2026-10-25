@@ -1,4 +1,6 @@
 from sheets import load_data
+import numpy as np
+from scipy import stats
 
 def create_table(df):
     table = df.set_index("Date")
@@ -64,12 +66,31 @@ def find_moving_average(df, window=7, percent=25):
         })
     return info
 
-
-
-if __name__ == "__main__":
-    df = load_data()
-    info = find_iqr(df)
-    # print(len(info))
-    # print(info[:4])
-    # print(find_zscore(df, threshold=2))
-    print(find_moving_average(df))
+def find_grubbs(df, alpha = 0.05):
+    table = create_table(df)
+    info = []
+    column_names = table.columns
+    for name in column_names:
+        s = table[name].copy()
+        while len(s) > 2:
+            n = len(s)
+            row_mean = s.mean()
+            row_std = s.std()
+            g = ((s - row_mean) / row_std).abs()
+            g_date = g.idxmax()
+            g_value = g.max()
+            t = stats.t.ppf(1 - alpha / (2 * n), n - 2)
+            g_crit = (n - 1) / np.sqrt(n) * np.sqrt(t ** 2 / (n - 2 + t**2))
+            if g_value < g_crit:
+                break
+            else:
+                info.append({
+                    "name": name,
+                    "date": g_date.strftime("%Y-%m-%d"),
+                    "value": float(s[g_date]),
+                    "g": float(g_value),
+                    "test": "grubbs"
+                })
+                s = s.drop(g_date)
+    return info
+    

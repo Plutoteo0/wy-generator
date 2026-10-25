@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from sheets import get_data, cache
 from stats import get_stats
-from anomalies import find_iqr, find_zscore, find_moving_average
+from anomalies import find_iqr, find_zscore, find_moving_average, find_grubbs
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 import numpy as np
@@ -36,7 +36,8 @@ def get_anomalies(test: str = 'iqr', k: float =1.5, threshold: float = 3, window
     TESTS_HANDLERS = {
         "iqr": lambda df: find_iqr(df, k),
         "zscore": lambda df: find_zscore(df, threshold),
-        "moving_average": lambda df: find_moving_average(df, window, percent)
+        "moving_average": lambda df: find_moving_average(df, window, percent),
+        "grubbs": lambda df: find_grubbs(df, alpha)
     }
     if test not in TESTS_HANDLERS:
         raise HTTPException(status_code=400, detail="Bad test selected")
