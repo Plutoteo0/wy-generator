@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+httpx
+pandas
+numpy
+scipy
+python-dotenv
+reportlab
+matplotlib

@@ -1,11 +1,12 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from sheets import get_data, cache
 from stats import get_stats
-from anomalies import find_iqr, find_zscore, find_moving_average, find_grubbs
+from anomalies import find_iqr, find_zscore, find_moving_average, find_grubbs, anomalies_test
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 import numpy as np
 from trend import fit_trend
+from report import build_pdf
 
 app = FastAPI()
 
@@ -33,15 +34,11 @@ def get_data_for_chart(refresh: bool = False):
 @app.get('/anomalies')
 def get_anomalies(test: str = 'iqr', k: float =1.5, threshold: float = 3, window: int = 7, percent: float = 25, alpha: float = 0.05):
     df = get_data()
-    TESTS_HANDLERS = {
-        "iqr": lambda df: find_iqr(df, k),
-        "zscore": lambda df: find_zscore(df, threshold),
-        "moving_average": lambda df: find_moving_average(df, window, percent),
-        "grubbs": lambda df: find_grubbs(df, alpha)
-    }
-    if test not in TESTS_HANDLERS:
-        raise HTTPException(status_code=400, detail="Bad test selected")
-    return TESTS_HANDLERS[test](df)
+    try:
+        result = anomalies_test(df, test, k, threshold, window, percent, alpha)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/trend")
 def get_trend_lines(degree: int):
@@ -60,6 +57,24 @@ def get_trend_lines(degree: int):
         "mines": mines,
         "total": line_for_total
     }
+
+@app.get("/report.pdf")
+def get_report_pdf(test: str = 'iqr', k: float =1.5, threshold: float = 3, window: int = 7, percent: float = 25, alpha: float = 0.05, chart: str = 'line', degree: int = 0):
+    df = get_data()
+    stats = get_stats(df)
+    params = {
+        "k":k,
+        "threshold":threshold,
+        "window": window,
+        "percent": percent,
+        "alpha": alpha
+    }
+    try:
+        anomalies = anomalies_test(df, test, k, threshold, window, percent, alpha)
+    except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+    pdf = build_pdf(df, stats, anomalies, test, chart, degree, params)
+    return Response(content=pdf, media_type="application/pdf")
 
 FRONTEND = Path(__file__).parent.parent / "frontend"
 app.mount("/", StaticFiles(directory=FRONTEND, html=True))

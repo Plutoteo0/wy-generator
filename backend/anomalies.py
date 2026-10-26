@@ -93,4 +93,14 @@ def find_grubbs(df, alpha = 0.05):
                 })
                 s = s.drop(g_date)
     return info
-    
+
+def anomalies_test(df, test: str, k: float, threshold: float , window: int , percent: float , alpha: float):
+    TEST_HANDLERS = {
+        "iqr": lambda df: find_iqr(df, k),
+        "zscore": lambda df: find_zscore(df, threshold),
+        "moving_average": lambda df: find_moving_average(df, window, percent),
+        "grubbs": lambda df: find_grubbs(df, alpha)
+    }
+    if test not in TEST_HANDLERS:
+            raise ValueError(f"Bad test selected {test!r}")
+    return TEST_HANDLERS[test](df)
